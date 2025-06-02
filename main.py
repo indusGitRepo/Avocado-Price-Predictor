@@ -3,7 +3,7 @@ import kaggle
 # import the pandas library to work with and manipulate avocado data
 import pandas as pd
 
-# Print every value to 3 decimal places
+Print every value to 3 decimal places
 pd.set_option('display.float_format', '{:.3f}'.format)
 
 # store the data from avocado.csv into the following variable
