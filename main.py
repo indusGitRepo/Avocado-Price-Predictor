@@ -2,6 +2,8 @@ import kaggle
 
 # import the pandas library to work with and manipulate avocado data
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Print every value to 3 decimal places
 pd.set_option('display.float_format', '{:.3f}'.format)
@@ -20,3 +22,6 @@ print(avocadoDataFrame['AveragePrice'].describe())
 
 print("Overview of stats for the Year: ")
 print(avocadoDataFrame['year'].describe())
+
+avocadoDataFrame.plot()
+plt.show()
