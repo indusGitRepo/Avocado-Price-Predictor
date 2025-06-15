@@ -23,8 +23,26 @@ avocadoDataFrame['Date'] = pd.to_datetime(avocadoDataFrame['Date'])
 
 avocadoDataFrame['year'] = avocadoDataFrame['Date'].dt.year
 
-averagePricePerYearPerCity = avocadoDataFrame.groupby(['region', 'year'])['AveragePrice'].mean()
-print(averagePricePerYearPerCity.unstack())
+averagePricePerYearPerCity = avocadoDataFrame.groupby(['region', 'year'])['AveragePrice'].mean().unstack()
+
+averageForEachRegionAllYears = averagePricePerYearPerCity.mean(axis=1)
+
+print(averagePricePerYearPerCity)
+
+print("\nTotal Average \n")
+
+dummy = averageForEachRegionAllYears.reset_index()
+dummy.columns = ('Region', 'Average Price')
+
+midPoint = len(dummy) // 2 + len(dummy) % 2
+leftHalf = dummy.iloc[:midPoint].reset_index(drop=True)
+rightHalf = dummy.iloc[midPoint:].reset_index(drop=True)
+
+leftHalf.columns = ['Region', 'Average Price']
+rightHalf.columns = ['Region', 'Average Price']
+
+splitDisplay = pd.concat([leftHalf, rightHalf], axis=1)
+print(splitDisplay)
 
 # print("Overview of columns and data: ")
 # avocadoDataFrame.info()
@@ -41,10 +59,20 @@ print(averagePricePerYearPerCity.unstack())
 # avocadoDataFrame.plot()
 # plt.show()
 
-averagePricePerYearPerCity.T.plot(figsize=(15,8))
+for i in range(54):
 
-plt.title('Average Avocado Price Per Year in Major US Cities')
-plt.xlabel('Year')
-plt.ylabel('Average Price')
+
+axis = averagePricePerYearPerCity.T.plot(marker='o', figsize=(14,8))
+
+axis.set_title("Average Avocado Price Per Year in Major US Cities")
+axis.set_xlabel('Year')
+axis.set_ylabel('Average Price')
+
+axis.legend(title="Major US Cities", title_fontsize=12, fontsize=10, loc="upper left", ncol=2)
+
+plt.grid(True)
+plt.tight_layout()
 plt.style.use('seaborn-v0_8-colorblind')
 plt.show()
+
+
