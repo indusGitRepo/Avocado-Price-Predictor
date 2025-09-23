@@ -1,0 +1,82 @@
+What is a time series?
+
+    - A time series model is a series of data points that are listed in time order.
+    - You can take that series of data and feed it into a model and can get a predicted value for the future for the associated row.
+        - Prediciting future values based on previously observered values.
+
+Machine Learning Process:
+
+    - Problem Formulation - What are you trying to solve / predict?
+    - X and Y values?
+
+Gathering the Raw Data:
+
+    - Identify the data that is needed.
+    - Find the location of that data.
+
+Data Preprocessing:
+
+    - First step is EDA (Exploratory Data Analysis)
+        - Observations/features, # of elements, NULL values, missing data, distribution of data, and relationships between values
+        - Data cleaning and data aggregation
+        - Normalizing data (improving quality and usability of data)
+    - Feature engineering - creating new calculated fields (for example averages)
+
+Split the Raw Data:
+
+    - Split the data into training, testing and evaluating data sets (70% - 20% - 10%)
+
+Select & Train Model(s):
+
+    - Classification, Regression, or Unsupervised Learning? For 70& of the data
+
+Model Evaluation:
+
+    - Use metric(s) to evaluate 20% od the data (the predicting)
+
+Parameter Tuning:
+
+    - To minimize the margin of error
+
+Final Model:
+
+
+I'm going to be using an ARIMA (Autoregressive integrated moving Average) model for my predictions which is integrating two different approached (Autoregressive modeling and Moving Average)
+to forecast future possible values. For avocado prices it's best to use a seasonal ARIMA as there are weekly cycles for price flunctuation.
+
+I started off with just a non-seasonal ARIMA and it's prediction was flat, but I got the following results:
+
+Graph:
+
+SARIMAX Results                                
+==============================================================================
+Dep. Variable:           AveragePrice   No. Observations:                  169
+Model:                 ARIMA(1, 1, 1)   Log Likelihood                  73.574
+Date:                Tue, 23 Sep 2025   AIC                           -141.147
+Time:                        18:15:24   BIC                           -131.775
+Sample:                    01-04-2015   HQIC                          -137.344
+                         - 03-25-2018                                         
+Covariance Type:                  opg                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+ar.L1          0.0446      0.097      0.462      0.644      -0.145       0.234
+ma.L1         -0.8379      0.053    -15.839      0.000      -0.942      -0.734
+sigma2         0.0242      0.003      8.948      0.000       0.019       0.030
+===================================================================================
+Ljung-Box (L1) (Q):                   0.00   Jarque-Bera (JB):                 7.12
+Prob(Q):                              0.99   Prob(JB):                         0.03
+Heteroskedasticity (H):               1.97   Skew:                            -0.50
+Prob(H) (two-sided):                  0.01   Kurtosis:                         3.08
+===================================================================================
+
+- The value that is trying to be predicted is the average price per week for that city.
+- # of observations are 169 weeks == 3 years.
+- AIC (Akaike information criterion) = -141.147 meaning model fits well as negative AIC is Great.
+- BIC (Bayesian Information Criterion) means how well a model explains data without overfitting and obtained low value of -131.775 which is great.
+- HQIC (Hannan-Quinn Information Criterion) another measurement for best fit and it is also low so great.
+- The ar.L1 has a high P-value 1 - 0.0446 = 0.644 which is greater than 0.05, so the AR term isn't statistically significant.
+- moving average is a good value as it's less than zero so suggests the last week strongly affects today's price.
+- Ljung-Box tests if the series is random or if there is a pattern - there is a 0.99 probability for this so there definetly is a pattern.
+- Jarque-Bera tests if data is normally distributed - the p value is less than 0.05 so it is not normally distributed (WILL TRY TO FIX WITH SEASONAL MODEL)
+- Heteroskedasticity means the spreas of the errors in the model are not constant and shows up as a funnel or increasing spread in scatter-plot. This data shows volatility because p value is below 0.05.
