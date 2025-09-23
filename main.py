@@ -1,3 +1,6 @@
+# Question number 1: How in-demand are avocados in the US and how much supply is there based on price changes...
+    # Will want to show overall average price increase over the years for all cities combined and how much volume there is
+
 # the dataset contains average price for a single avocado that week across major US cities, the total # of avocados sold that week in that city, 
 # the total number of 4046, 4225, and 4770 avocados sold in that city, total bags, total small bags, total large bags, and total x-large bags sold in that city that week,
 # and if the type of avocado was conventional or organic, the year, and the US city. This data is from 2015-2018.
@@ -6,13 +9,12 @@
 
 # year, average price for that year per city, total volume for that year per city, type 
 
-
-import kaggle
-
 # import the pandas library to work with and manipulate avocado data
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
+import statsmodels.api as sm # for estimating relationships between variables
 
 # Print every value to 3 decimal places
 pd.set_option('display.float_format', '{:.3f}'.format)
@@ -23,51 +25,61 @@ cleanData = ['year', 'AveragePrice', 'Total Volume', 'type', 'region']
 
 # store the data from avocado.csv into the following variable
 avocadoDataFrame = avocadoDataFrame[cleanData].copy()
-#avocadoDataFrame['Date'] = pd.to_datetime(avocadoDataFrame['Date'])
-
-#avocadoDataFrame['year'] = avocadoDataFrame['Date'].dt.year
 
 averagePricePerYearPerCity = avocadoDataFrame.groupby(['region', 'year', 'type']).agg({'AveragePrice': 'mean', 'Total Volume': 'sum'}).reset_index()
 
-#averageForEachRegionAllYears = averagePricePerYearPerCity.mean(axis=1)
 
-print(averagePricePerYearPerCity)
+averagePricePerYearPerCity['log_price'] = np.log(averagePricePerYearPerCity['AveragePrice'])
+averagePricePerYearPerCity['log_volume'] = np.log(averagePricePerYearPerCity['Total Volume'])
 
-# albanymean = avocadoDataFrame[(avocadoDataFrame['region'] == 'Albany') & (avocadoDataFrame['year'] == 2015) & (avocadoDataFrame['type'] == 'conventional')]
-# result = albanymean['AveragePrice'].mean()
-# print("it issssssssssssss")
-# print(result)
-# print("\nTotal Average \n")
+# declare a list that will store elasticity for price and volume by region
+elasticity = []
 
-# dummy = averageForEachRegionAllYears.reset_index()
-# dummy.columns = ('Region', 'Average Price')
+# go through each region 
+for region, group in averagePricePerYearPerCity.groupby('region'):
 
-# midPoint = len(dummy) // 2 + len(dummy) % 2
-# leftHalf = dummy.iloc[:midPoint].reset_index(drop=True)
-# rightHalf = dummy.iloc[midPoint:].reset_index(drop=True)
+    # the logged price is the independent variable x and sm.add_constant is used to add an intercept to the model
+    x = sm.add_constant(group['log_price'])
 
-# leftHalf.columns = ['Region', 'Average Price']
-# rightHalf.columns = ['Region', 'Average Price']
+    # dependent variable because it is what will be predicted based on price
+    y = group['log_volume']
 
-# splitDisplay = pd.concat([leftHalf, rightHalf], axis=1)
-# print(splitDisplay)
+    # create an OLS regression model to predict the volume for the linear regression model "line of best fit" and the .fit() also estimates slope and intercept
+    model = sm.OLS(y, x).fit()
 
-# # print("Overview of columns and data: ")
-# # avocadoDataFrame.info()
+    # model.parms represents the slope of the line and that elasticity value will be added to the elasticity list alongside the region name
+    elasticity.append({"region": region, "elasticity": model.params['log_price']})
 
-# # print("Overview of stats for Date: ")
-# # print(avocadoDataFrame['Date'].describe())
+# convert the list into a dataframe to do data manipulation more easily
+elasticityDataFrame = pd.DataFrame(elasticity)
 
-# # print("Overview of stats for the Average Prices: ")
-# # print(avocadoDataFrame['AveragePrice'].describe())
+# print the first few results
+print(elasticityDataFrame.head())
 
-# # print("Overview of stats for the Year: ")
-# # print(avocadoDataFrame['year'].describe())
+# sort elasticity values from smallest to largest and plot the results using a bar graph
+elasticityDataFrame.sort_values('elasticity').plot(
+    x='region', y='elasticity', kind='bar', figsize=(12,6), legend=False
+)
 
-# # avocadoDataFrame.plot()
-# # plt.show()
+# adding a horizontal line at y=0 to see if there are any negative values
+plt.axhline(0, color='black', linestyle='--')
 
-# for i in range(54):
+plt.title("USA Avacado Price Elasticity by Region")
+
+plt.ylabel("Elasticity")
+plt.show()
+
+
+
+
+# Elascity for Albany
+
+
+
+
+
+
+
 
 
 # axis = averagePricePerYearPerCity.T.plot(marker='o', figsize=(14,8))
