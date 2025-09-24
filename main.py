@@ -15,8 +15,9 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from prophet import Prophet 
 
-import statsmodels.api as sm # for estimating relationships between variables
+#import statsmodels.api as sm # for estimating relationships between variables
 
 # Print every value to 3 decimal places
 pd.set_option('display.float_format', '{:.3f}'.format)
@@ -38,43 +39,66 @@ avocadoDataFrame = avocadoDataFrame.sort_values('Date')
 city = "Albany"
 avocadoType = "conventional"
 
-citiesData = avocadoDataFrame[(avocadoDataFrame['region'] == city) & (avocadoDataFrame['type'] == avocadoType)]
+citiesData = avocadoDataFrame[(avocadoDataFrame['region'] == city) & (avocadoDataFrame['type'] == avocadoType).copy()]
 
-# date will be the index
-citiesData = citiesData.set_index('Date')
+# date will be the index and for prophet it requires ds (date) and y (target variable)
+citiesData = citiesData.rename(columns={'Date': 'ds', 'AveragePrice': 'y'})
+
+# To reduce long-term forecasting to be less senseitive to changes in weekly data and make predictions more reliable
+citiesData = citiesData.resample('M', on='ds').mean().reset_index()
 
 # set the dependent variable (the one that we will be predicting) which is going to be the price
-y = citiesData['AveragePrice']
+#y = citiesData['AveragePrice']
 
 # ARIMA model from statsmodels' time series analysis (TSA) where y is the target variable (average price for one city)
 # the order is has the following paramaters -> first - autoregressive terms (looking one week back to see how the previous price influences current price)
 # the second paramater is the differencing (takes the difference in price between consecutive weeks)
 # the third paramater is the moving average term (difference between predicted and actual last week value)
-model = sm.tsa.ARIMA(y, order=(1,1,1))
-results = model.fit()
+# model = sm.tsa.ARIMA(y, order=(1,1,1))
+# results = model.fit()
 
-print(results.summary())
+# print(results.summary())
+
+# the above comments were for normal ARIMA for my own learning below is SARIMA (Seasonal ARIMA)
+# model = sm.tsa.SARIMAX(y, order=(1,1,1), seasonal_order=(1,1,1,52)) # yearly seasionality for weekly data
+# results = model.fit()
+
+# Prophet model initalization
+model = Prophet(yearly_seasonality=True, daily_seasonality=False, weekly_seasonality=False)
+model.fit(citiesData)
+
+futureDataFrame = model.make_future_dataframe(periods=520,freq='W')
+forecast = model.predict(futureDataFrame)
 
 # Forecast 520 weeks ahead (10 years)
-forecast = results.get_forecast(steps=520)
+# forecast = results.get_forecast(steps=520)
 
 # extract the predicted prices from the forecast and apply it to the predicted mean (predicted prices)
 forecastMean = forecast.predicted_mean
 
 # confidence interval for each forecasted value (uncertain ranges)
-forecastConfidenceInterval = forecast.conf_int()
-
-plt.figure(figsize=(14,6))
-plt.plot(y, label='Historical')
-plt.plot(forecastMean, label='Forecast', color='red')
-plt.fill_between(forecastConfidenceInterval.index,
-                 forecastConfidenceInterval.iloc[:,0],
-                 forecastConfidenceInterval.iloc[:,1], color='pink', alpha=0.3)
+#forecastConfidenceInterval = forecast.conf_int()
+fig1 = model.plot(forecast)
 plt.title(f"Avocado Price Forecast ({city}, {avocadoType})")
 plt.xlabel("Date")
 plt.ylabel("Average Price")
-plt.legend()
 plt.show()
+
+# Optional: plot components (trend, yearly seasonality)
+fig2 = model.plot_components(forecast)
+plt.show()
+
+# plt.figure(figsize=(14,6))
+# plt.plot(y, label='Historical')
+# plt.plot(forecastMean, label='Forecast', color='red')
+# plt.fill_between(forecastConfidenceInterval.index,
+#                  forecastConfidenceInterval.iloc[:,0],
+#                  forecastConfidenceInterval.iloc[:,1], color='pink', alpha=0.3)
+# plt.title(f"Avocado Price Forecast ({city}, {avocadoType})")
+# plt.xlabel("Date")
+# plt.ylabel("Average Price")
+# plt.legend()
+# plt.show()
 
 
 # averagePricePerYearPerCity['log_price'] = np.log(averagePricePerYearPerCity['AveragePrice'])

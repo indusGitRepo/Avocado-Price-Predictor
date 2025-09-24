@@ -80,3 +80,36 @@ Prob(H) (two-sided):                  0.01   Kurtosis:                         3
 - Ljung-Box tests if the series is random or if there is a pattern - there is a 0.99 probability for this so there definetly is a pattern.
 - Jarque-Bera tests if data is normally distributed - the p value is less than 0.05 so it is not normally distributed (WILL TRY TO FIX WITH SEASONAL MODEL)
 - Heteroskedasticity means the spreas of the errors in the model are not constant and shows up as a funnel or increasing spread in scatter-plot. This data shows volatility because p value is below 0.05.
+
+With the seasonal ARIMA model:
+
+                                     SARIMAX Results                                      
+==========================================================================================
+Dep. Variable:                       AveragePrice   No. Observations:                  169
+Model:             SARIMAX(1, 1, 1)x(1, 1, 1, 52)   Log Likelihood                  26.770
+Date:                            Wed, 24 Sep 2025   AIC                            -43.541
+Time:                                    13:18:09   BIC                            -29.773
+Sample:                                01-04-2015   HQIC                           -37.952
+                                     - 03-25-2018                                         
+Covariance Type:                              opg                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+ar.L1         -0.0133      0.116     -0.114      0.909      -0.241       0.214
+ma.L1         -0.8159      0.067    -12.108      0.000      -0.948      -0.684
+ar.S.L52      -0.5667      0.518     -1.094      0.274      -1.582       0.449
+ma.S.L52      -0.0630      0.757     -0.083      0.934      -1.547       1.421
+sigma2         0.0297      0.005      5.863      0.000       0.020       0.040
+===================================================================================
+Ljung-Box (L1) (Q):                   0.00   Jarque-Bera (JB):                 1.63
+Prob(Q):                              0.95   Prob(JB):                         0.44
+Heteroskedasticity (H):               1.56   Skew:                            -0.27
+Prob(H) (two-sided):                  0.17   Kurtosis:                         2.80
+===================================================================================
+
+- Forecasts are more reliable for the next 10 years but confidence interval keeps growing wider each year.
+- Too much uncertainty in graph over time but mean price stays flat which matches past trends.
+
+There needs to be additional factors because past prices aren't enough to predict future prices.
+
+Instead of SARIMA use Prophet.
