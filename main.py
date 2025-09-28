@@ -39,13 +39,12 @@ avocadoDataFrame = avocadoDataFrame.sort_values('Date')
 city = "Albany"
 avocadoType = "conventional"
 
-citiesData = avocadoDataFrame[(avocadoDataFrame['region'] == city) & (avocadoDataFrame['type'] == avocadoType).copy()]
+citiesData = avocadoDataFrame[(avocadoDataFrame['region'] == city) & (avocadoDataFrame['type'] == avocadoType)].copy()
 
 # date will be the index and for prophet it requires ds (date) and y (target variable)
 citiesData = citiesData.rename(columns={'Date': 'ds', 'AveragePrice': 'y'})
-
-# To reduce long-term forecasting to be less senseitive to changes in weekly data and make predictions more reliable
-citiesData = citiesData.resample('M', on='ds').mean().reset_index()
+citiesData['ds'] = pd.to_datetime(citiesData['ds'])
+citiesData['y'] = np.log(citiesData['y'])
 
 # set the dependent variable (the one that we will be predicting) which is going to be the price
 #y = citiesData['AveragePrice']
@@ -64,29 +63,36 @@ citiesData = citiesData.resample('M', on='ds').mean().reset_index()
 # results = model.fit()
 
 # Prophet model initalization
-model = Prophet(yearly_seasonality=True, daily_seasonality=False, weekly_seasonality=False)
+model = Prophet(yearly_seasonality=True, daily_seasonality=False, weekly_seasonality=True, changepoint_prior_scale=0.01, n_changepoints=25)
+
 model.fit(citiesData)
 
-futureDataFrame = model.make_future_dataframe(periods=520,freq='W')
+futureDataFrame = model.make_future_dataframe(periods=36,freq='W')
 forecast = model.predict(futureDataFrame)
 
 # Forecast 520 weeks ahead (10 years)
 # forecast = results.get_forecast(steps=520)
 
 # extract the predicted prices from the forecast and apply it to the predicted mean (predicted prices)
-forecastMean = forecast.predicted_mean
+forecast['yhat'] = np.exp(forecast['yhat'])
+forecast['yhat_lower'] = np.exp(forecast['yhat_lower'])
+forecast['yhat_upper'] = np.exp(forecast['yhat_upper'])
 
 # confidence interval for each forecasted value (uncertain ranges)
 #forecastConfidenceInterval = forecast.conf_int()
 fig1 = model.plot(forecast)
-plt.title(f"Avocado Price Forecast ({city}, {avocadoType})")
+plt.title(f"Avocado Price Forecast - {city.title()} ({avocadoType})")
 plt.xlabel("Date")
-plt.ylabel("Average Price")
+plt.ylabel("Predicted Average Price ($)")
+plt.tight_layout()
 plt.show()
 
-# Optional: plot components (trend, yearly seasonality)
 fig2 = model.plot_components(forecast)
+plt.tight_layout()
 plt.show()
+
+
+print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(36).to_string(index=False))
 
 # plt.figure(figsize=(14,6))
 # plt.plot(y, label='Historical')
