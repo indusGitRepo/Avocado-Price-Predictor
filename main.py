@@ -17,6 +17,45 @@ import numpy as np
 import matplotlib.pyplot as plt
 from prophet import Prophet 
 
+# Function to make forecast based on city and avocado type selected by user
+def forecastPriceByCityAndType(city, avocadoType):
+    citiesData = avocadoDataFrame[(avocadoDataFrame['region'].str.lower() == city) & (avocadoDataFrame['type'].str.lower() == avocadoType)].copy()
+
+    # date will be the index and for prophet it requires ds (date) and y (target variable)
+    citiesData = citiesData.rename(columns={'Date': 'ds', 'AveragePrice': 'y'})
+    citiesData['ds'] = pd.to_datetime(citiesData['ds'])
+    citiesData['y'] = np.log(citiesData['y'])
+
+    # Prophet model initalization
+    model = Prophet(yearly_seasonality=True, daily_seasonality=False, weekly_seasonality=True, changepoint_prior_scale=0.01, n_changepoints=25)
+
+    model.fit(citiesData)
+
+    futureDataFrame = model.make_future_dataframe(periods=36,freq='W')
+    forecast = model.predict(futureDataFrame)
+
+    # extract the predicted prices from the forecast and apply it to the predicted mean (predicted prices)
+    forecast['yhat'] = np.exp(forecast['yhat'])
+    forecast['yhat_lower'] = np.exp(forecast['yhat_lower'])
+    forecast['yhat_upper'] = np.exp(forecast['yhat_upper'])
+
+    # confidence interval for each forecasted value (uncertain ranges)
+    #forecastConfidenceInterval = forecast.conf_int()
+    fig1 = model.plot(forecast)
+    plt.title(f"Avocado Price Forecast - {city.title()} ({avocadoType})")
+    plt.xlabel("Date")
+    plt.ylabel("Predicted Average Price ($)")
+    plt.tight_layout()
+    plt.show()
+
+    fig2 = model.plot_components(forecast)
+    plt.tight_layout()
+    plt.show()
+
+
+    print(f"\n📈 Predicted prices for {city.title()} ({avocadoType}) — next 36 weeks:\n")
+    print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(36).to_string(index=False))
+
 #import statsmodels.api as sm # for estimating relationships between variables
 
 # Print every value to 3 decimal places
@@ -35,142 +74,32 @@ avocadoDataFrame = avocadoDataFrame[cleanData].copy()
 avocadoDataFrame['Date'] = pd.to_datetime(avocadoDataFrame['Date'])
 avocadoDataFrame = avocadoDataFrame.sort_values('Date')
 
-# Doing prediction just for the city Albany and the type of avaocado will be conventional
-city = "Albany"
-avocadoType = "conventional"
+availableCities = sorted(avocadoDataFrame['region'].unique())
+availableAvocadoTypes = sorted(avocadoDataFrame['type'].unique())
 
-citiesData = avocadoDataFrame[(avocadoDataFrame['region'] == city) & (avocadoDataFrame['type'] == avocadoType)].copy()
+print("\nAvailable cities to forecast prices: ")
+print("|".join(availableCities[:10]), "...")
 
-# date will be the index and for prophet it requires ds (date) and y (target variable)
-citiesData = citiesData.rename(columns={'Date': 'ds', 'AveragePrice': 'y'})
-citiesData['ds'] = pd.to_datetime(citiesData['ds'])
-citiesData['y'] = np.log(citiesData['y'])
+print("\nAvailable types of avocado's to forecast prices: ")
+print("|".join(availableAvocadoTypes[:10]), "...")
 
-# set the dependent variable (the one that we will be predicting) which is going to be the price
-#y = citiesData['AveragePrice']
+anotherForecast = True
 
-# ARIMA model from statsmodels' time series analysis (TSA) where y is the target variable (average price for one city)
-# the order is has the following paramaters -> first - autoregressive terms (looking one week back to see how the previous price influences current price)
-# the second paramater is the differencing (takes the difference in price between consecutive weeks)
-# the third paramater is the moving average term (difference between predicted and actual last week value)
-# model = sm.tsa.ARIMA(y, order=(1,1,1))
-# results = model.fit()
+while anotherForecast == True:
+    
+    city = input("From the selection above enter the city you would like to see predictions for: ").strip().lower()
+    avocadoType = input("From the selection above enter the type of avocado you would like to see predictions for: ").strip().lower()
 
-# print(results.summary())
+    forecastPriceByCityAndType(city, avocadoType)
 
-# the above comments were for normal ARIMA for my own learning below is SARIMA (Seasonal ARIMA)
-# model = sm.tsa.SARIMAX(y, order=(1,1,1), seasonal_order=(1,1,1,52)) # yearly seasionality for weekly data
-# results = model.fit()
+    promptUserAgain = input("Would you like to forecast another city? Type Y for yes and N for No: ").strip().lower()
 
-# Prophet model initalization
-model = Prophet(yearly_seasonality=True, daily_seasonality=False, weekly_seasonality=True, changepoint_prior_scale=0.01, n_changepoints=25)
-
-model.fit(citiesData)
-
-futureDataFrame = model.make_future_dataframe(periods=36,freq='W')
-forecast = model.predict(futureDataFrame)
-
-# Forecast 520 weeks ahead (10 years)
-# forecast = results.get_forecast(steps=520)
-
-# extract the predicted prices from the forecast and apply it to the predicted mean (predicted prices)
-forecast['yhat'] = np.exp(forecast['yhat'])
-forecast['yhat_lower'] = np.exp(forecast['yhat_lower'])
-forecast['yhat_upper'] = np.exp(forecast['yhat_upper'])
-
-# confidence interval for each forecasted value (uncertain ranges)
-#forecastConfidenceInterval = forecast.conf_int()
-fig1 = model.plot(forecast)
-plt.title(f"Avocado Price Forecast - {city.title()} ({avocadoType})")
-plt.xlabel("Date")
-plt.ylabel("Predicted Average Price ($)")
-plt.tight_layout()
-plt.show()
-
-fig2 = model.plot_components(forecast)
-plt.tight_layout()
-plt.show()
-
-
-print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(36).to_string(index=False))
-
-# plt.figure(figsize=(14,6))
-# plt.plot(y, label='Historical')
-# plt.plot(forecastMean, label='Forecast', color='red')
-# plt.fill_between(forecastConfidenceInterval.index,
-#                  forecastConfidenceInterval.iloc[:,0],
-#                  forecastConfidenceInterval.iloc[:,1], color='pink', alpha=0.3)
-# plt.title(f"Avocado Price Forecast ({city}, {avocadoType})")
-# plt.xlabel("Date")
-# plt.ylabel("Average Price")
-# plt.legend()
-# plt.show()
-
-
-# averagePricePerYearPerCity['log_price'] = np.log(averagePricePerYearPerCity['AveragePrice'])
-# averagePricePerYearPerCity['log_volume'] = np.log(averagePricePerYearPerCity['Total Volume'])
-
-# # declare a list that will store elasticity for price and volume by region
-# elasticity = []
-
-# # go through each region 
-# for region, group in averagePricePerYearPerCity.groupby('region'):
-
-#     # the logged price is the independent variable x and sm.add_constant is used to add an intercept to the model
-#     x = sm.add_constant(group['log_price'])
-
-#     # dependent variable because it is what will be predicted based on price
-#     y = group['log_volume']
-
-#     # create an OLS regression model to predict the volume for the linear regression model "line of best fit" and the .fit() also estimates slope and intercept
-#     model = sm.OLS(y, x).fit()
-
-#     # model.parms represents the slope of the line and that elasticity value will be added to the elasticity list alongside the region name
-#     elasticity.append({"region": region, "elasticity": model.params['log_price']})
-
-# # convert the list into a dataframe to do data manipulation more easily
-# elasticityDataFrame = pd.DataFrame(elasticity)
-
-# # print the first few results
-# print(elasticityDataFrame.head())
-
-# # sort elasticity values from smallest to largest and plot the results using a bar graph
-# elasticityDataFrame.sort_values('elasticity').plot(
-#     x='region', y='elasticity', kind='bar', figsize=(12,6), legend=False
-# )
-
-# # adding a horizontal line at y=0 to see if there are any negative values
-# plt.axhline(0, color='black', linestyle='--')
-
-# plt.title("USA Avacado Price Elasticity by Region")
-
-# plt.ylabel("Elasticity")
-# plt.show()
+    if promptUserAgain == 'y':
+        anotherForecast = True
+    else:
+        anotherForecast = False
 
 
 
-
-# # Elascity for Albany
-
-
-
-
-
-
-
-
-
-# axis = averagePricePerYearPerCity.T.plot(marker='o', figsize=(14,8))
-
-# axis.set_title("Average Avocado Price Per Year in Major US Cities")
-# axis.set_xlabel('Year')
-# axis.set_ylabel('Average Price')
-
-# axis.legend(title="Major US Cities", title_fontsize=12, fontsize=10, loc="upper left", ncol=2)
-
-# plt.grid(True)
-# plt.tight_layout()
-# plt.style.use('seaborn-v0_8-colorblind')
-# plt.show()
 
 
