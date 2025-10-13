@@ -19,7 +19,7 @@ from prophet import Prophet
 
 # Function to make forecast based on city and avocado type selected by user
 def forecastPriceByCityAndType(city, avocadoType):
-    citiesData = avocadoDataFrame[(avocadoDataFrame['region'].str.lower() == city) & (avocadoDataFrame['type'].str.lower() == avocadoType)].copy()
+    citiesData = avocadoDataFrame[(avocadoDataFrame['region'].str.lower() == city.lower()) & (avocadoDataFrame['type'].str.lower() == avocadoType.lower())].copy()
 
     # date will be the index and for prophet it requires ds (date) and y (target variable)
     citiesData = citiesData.rename(columns={'Date': 'ds', 'AveragePrice': 'y'})
