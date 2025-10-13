@@ -39,22 +39,33 @@ def forecastPriceByCityAndType(city, avocadoType):
     forecast['yhat_lower'] = np.exp(forecast['yhat_lower'])
     forecast['yhat_upper'] = np.exp(forecast['yhat_upper'])
 
+    forecastDataFrame = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
+    forecastDataFrame = forecastDataFrame.rename(columns={'ds': 'Date', 'yhat': 'Forecast', 'yhat_lower': 'Lower', 'yhat_upper': 'Upper'})
+
+    return forecastDataFrame
+
+def getAvailableCities():
+    return availableCities
+
+def getAvailableAvocadoTypes():
+    return availableAvocadoTypes
+
     # confidence interval for each forecasted value (uncertain ranges)
     #forecastConfidenceInterval = forecast.conf_int()
-    fig1 = model.plot(forecast)
-    plt.title(f"Avocado Price Forecast - {city.title()} ({avocadoType})")
-    plt.xlabel("Date")
-    plt.ylabel("Predicted Average Price ($)")
-    plt.tight_layout()
-    plt.show()
+    # fig1 = model.plot(forecast)
+    # plt.title(f"Avocado Price Forecast - {city.title()} ({avocadoType})")
+    # plt.xlabel("Date")
+    # plt.ylabel("Predicted Average Price ($)")
+    # plt.tight_layout()
+    # plt.show()
 
-    fig2 = model.plot_components(forecast)
-    plt.tight_layout()
-    plt.show()
+    # fig2 = model.plot_components(forecast)
+    # plt.tight_layout()
+    # plt.show()
 
 
-    print(f"\n📈 Predicted prices for {city.title()} ({avocadoType}) — next 36 weeks:\n")
-    print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(36).to_string(index=False))
+    # print(f"\n📈 Predicted prices for {city.title()} ({avocadoType}) — next 36 weeks:\n")
+    # print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(36).to_string(index=False))
 
 #import statsmodels.api as sm # for estimating relationships between variables
 
@@ -77,27 +88,27 @@ avocadoDataFrame = avocadoDataFrame.sort_values('Date')
 availableCities = sorted(avocadoDataFrame['region'].unique())
 availableAvocadoTypes = sorted(avocadoDataFrame['type'].unique())
 
-print("\nAvailable cities to forecast prices: ")
-print("|".join(availableCities[:10]), "...")
+# print("\nAvailable cities to forecast prices: ")
+# print("|".join(availableCities[:10]), "...")
 
-print("\nAvailable types of avocado's to forecast prices: ")
-print("|".join(availableAvocadoTypes[:10]), "...")
+# print("\nAvailable types of avocado's to forecast prices: ")
+# print("|".join(availableAvocadoTypes[:10]), "...")
 
-anotherForecast = True
+# anotherForecast = True
 
-while anotherForecast == True:
+# while anotherForecast == True:
     
-    city = input("From the selection above enter the city you would like to see predictions for: ").strip().lower()
-    avocadoType = input("From the selection above enter the type of avocado you would like to see predictions for: ").strip().lower()
+#     city = input("From the selection above enter the city you would like to see predictions for: ").strip().lower()
+#     avocadoType = input("From the selection above enter the type of avocado you would like to see predictions for: ").strip().lower()
 
-    forecastPriceByCityAndType(city, avocadoType)
+#     forecastPriceByCityAndType(city, avocadoType)
 
-    promptUserAgain = input("Would you like to forecast another city? Type Y for yes and N for No: ").strip().lower()
+#     promptUserAgain = input("Would you like to forecast another city? Type Y for yes and N for No: ").strip().lower()
 
-    if promptUserAgain == 'y':
-        anotherForecast = True
-    else:
-        anotherForecast = False
+#     if promptUserAgain == 'y':
+#         anotherForecast = True
+#     else:
+#         anotherForecast = False
 
 
 
