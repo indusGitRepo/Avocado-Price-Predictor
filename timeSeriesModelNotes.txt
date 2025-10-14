@@ -113,3 +113,22 @@ Prob(H) (two-sided):                  0.17   Kurtosis:                         2
 There needs to be additional factors because past prices aren't enough to predict future prices.
 
 Instead of SARIMA use Prophet.
+
+
+October 13 Update:
+
+- Can provide forecast if user selects city and avocado type
+- Forecast is for the next 36 weeks
+- react front end
+- For the FastAPI backend used the following commands:
+    1. python3 -m venv venv // to create a virtual environment
+    2. source venv/bin/activate // activate the virtual environment
+    3. pip install fastapi uvicorn pandas numpy prophet
+    4. pip install fastapi[all]
+    5. uvicorn app:app --reload
+- To run the frontend:
+    1. In the frontend directory npm install
+    2. npm install axios recharts
+    3. npm start
+
+- Next step is to clean up the UI and add more information on how to use the app.

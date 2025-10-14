@@ -1,5 +1,6 @@
 # this file is the bridge bewtween data cleaning and forecast logic in python and react front-end
 # the react app will call this FASTAPI server through /api/forecast endpoint
+
 from fastapi import FastAPI # create web API's and define routes like /api/cities that the React app can call
 from fastapi.middleware.cors import CORSMiddleware # CORS (cross origin resourse sharing) allowes react (localhost3000) and backend (localhost:8000) to communicate
 import main # main class with data cleaning and forecasting logic
