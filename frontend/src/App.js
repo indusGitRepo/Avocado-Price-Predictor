@@ -15,15 +15,15 @@ function App(){
     // this will only run once when the compnent mounts due to the [] array, and grabs all the cities and types from FastAPI endpoint
     // then res.data.cities  and res.data.types returns a JSON object which then updates the react states setCities and setTypes
     useEffect(() => {
-        axios.get("http://localhost:8000/api/cities").then((res) => setCities(res.data.cities));
-        axios.get("http://localhost:8000/api/types").then((res) => setTypes(res.data.types));
+        axios.get("/api/cities").then((res) => setCities(res.data.cities));
+        axios.get("/api/types").then((res) => setTypes(res.data.types));
     }, []);
 
     // this will run every time the selected city or avocado type is changed and
     // then sends a GET request to /api/forecast/ with quiery paramaters (city and avocadoType), and then based on data frame returend from backend sets the forecast
     useEffect(() => {
         if (selectedCity && selectedType) {
-          axios.get("http://localhost:8000/api/forecast", {
+          axios.get("/api/forecast", {
             params: { city: selectedCity, avocadoType: selectedType },
           }).then((res) => {
             setForecast(res.data.forecast);
