@@ -26,6 +26,9 @@ def getTypes():
 # based on the city and type selected by user on front-end, this function returns a dataframe with the forecast (JSON FRIENDLY)
 @app.get("/api/forecast")
 def forecast(city: str, avocadoType: str):
-    forecastData = main.forecastPriceByCityAndType(city, avocadoType)
-    return forecastData.to_dict(orient="records")
+    forecastData, seasonalityData = main.forecastPriceByCityAndType(city, avocadoType)
+    return {
+        "forecast": forecastData.to_dict(orient="records"),
+        "seasonality": seasonalityData.to_dict(orient="records")
+    }
 

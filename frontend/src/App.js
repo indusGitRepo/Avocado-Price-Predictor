@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react"
 import axios from "axios"; // library for making HTTP requests to FastAPI backend
 import {
     LineChart,Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label} from "recharts"; // compnents to build charts
+import "./App.css";
 
 function App(){
     const [cities, setCities] = useState([]); // array of all avaialbe cities in drop-down menu
@@ -9,6 +10,7 @@ function App(){
     const [selectedCity, setSelectedCity] = useState(""); // selected city by user
     const [selectedType, setSelectedType] = useState(""); // selected avocado type by user
     const [forecast, setForecast] = useState([]); // array of forecast data frame from the backend
+    const [seasonality, setSeasonality] = useState([]);
 
     // this will only run once when the compnent mounts due to the [] array, and grabs all the cities and types from FastAPI endpoint
     // then res.data.cities  and res.data.types returns a JSON object which then updates the react states setCities and setTypes
@@ -20,17 +22,24 @@ function App(){
     // this will run every time the selected city or avocado type is changed and
     // then sends a GET request to /api/forecast/ with quiery paramaters (city and avocadoType), and then based on data frame returend from backend sets the forecast
     useEffect(() => {
-        if (selectedCity && selectedType){
-            axios.get("http://localhost:8000/api/forecast", {
-                params: {city: selectedCity, avocadoType: selectedType},
-            }).then((res) => setForecast(res.data));
+        if (selectedCity && selectedType) {
+          axios.get("http://localhost:8000/api/forecast", {
+            params: { city: selectedCity, avocadoType: selectedType },
+          }).then((res) => {
+            setForecast(res.data.forecast);
+            setSeasonality(res.data.seasonality);
+          });
         }
-    }, [selectedCity, selectedType]);
+      }, [selectedCity, selectedType]);
 
+    // short paragrapgh descriping functionality of app with style
     return (
         <div style={{ 
             padding: "2rem", 
-            backgroundColor: "#f3fcf0"}}>
+            backgroundColor: "#f3fcf0",
+            minHeight: "100vh",
+            margin: 0
+            }}>
             <h1
             style={{
                 color: "#144205",     
@@ -45,7 +54,7 @@ function App(){
             </h1>
             <p
                 style={{
-                    fontSize: "1rem",
+                    fontSize: "1.3rem",
                     color: "#361e00",
                     lineHeight: "1.6",
                     fontFamily: "Arial, sans-serif",
@@ -55,12 +64,13 @@ function App(){
                     textIndent: "2em", 
                 }}
             >
-                This Prophet model uses weekly avocado prices from cities across the USA from 2015-2018, and predicts how much the price of one conventional or organic 
-                avocado will cost by city. To use this model select the city you would like to see predictions for, as well as, the type of avocado from the drop down menus. 
-                As a result, you will be able to see the average price for a single avocado forecast 8 months from today’s date, as well as the uncertainty of the prediction from the Upper and Lower bounds. The overall forecast predicts by week.
+                This Prophet model uses weekly avocado prices from cities across the USA from 2015-2018 and predicts the price of a single conventional or organic avocado by city. 
+                To use this model, select a city and avocado type from the dropdown menus. 
+                The model forecasts the average price for 8 months from the last date in the dataset, along with the uncertainty of the prediction represented by the Upper and Lower bounds. 
+                Forecasts are provided on a weekly basis.
             </p>
 
-            {/* Dropdown menus */}
+            {/* Dropdown menus + style*/}
             <div style={{ textAlign: "center", marginBottom: "5rem" }}>
             <select
                 value={selectedCity}
@@ -108,7 +118,7 @@ function App(){
             </select>
             </div>
 
-            {/* Line chart for the forecast */}
+            {/* Line chart for the forecast + style*/}
             {forecast.length > 0 && (
                 <ResponsiveContainer width="100%" height={400}>
                     <LineChart
@@ -168,8 +178,79 @@ function App(){
                     </LineChart>
                 </ResponsiveContainer>
             )}
-        </div>
-    );
-}
+
+            {/* short paragrapgh describing the second grapgh that goes into detail about trends and seasonality + style */}
+            {selectedCity && selectedType && forecast.length > 0 && (
+                <p
+                    style={{
+                        fontSize: "1.3rem",
+                        color: "#361e00",
+                        lineHeight: "1.6",
+                        fontFamily: "Arial, sans-serif",
+                        margin: "0 auto 9rem auto", 
+                        maxWidth: "600px",
+                        textAlign: "center", 
+                        textIndent: "2em", 
+                        marginTop: "7rem"
+                    }}
+                >
+                    Below shows the seasonal and trend components of avocado prices for the selected city and type. Where trend describes the overall long-term direction of prices, weekly
+                    seasonality shows changes in the price by week, and lastyl, yearly shows changes and patterns that happen every year.
+                </p>
+            )}
+
+            {/* seasonality graph */}
+            {seasonality.length > 0 && (
+              <div style={{ marginTop: "7rem" }}>
+                <h2 style={{
+                  textAlign: "center",
+                  color: "#144205",
+                  fontFamily: "Arial, sans-serif",
+                  marginBottom: "2rem"
+                }}>
+                  Seasonal and Trend Components
+                </h2>
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart
+                    data={seasonality}
+                    margin={{ top: 50, right: 50, left: 150, bottom: 70 }}
+                    style={{ backgroundColor: "rgb(255, 250, 246)" }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="Date"
+                      tickCount={10}
+                      angle={-45}
+                      textAnchor="end"
+                      minTickGap={15}
+                      tickFormatter={(date) =>
+                        new Date(date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      }
+                    >
+                      <Label value="Date" offset={-45} position="insideBottom"
+                        style={{ fontWeight: 'bold', fill: '#000000', fontSize: 18 }} />
+                    </XAxis>
+                    <YAxis>
+                      <Label value="Effect on Price (USD)"
+                        angle={-90}
+                        position="left"
+                        style={{ textAnchor: 'middle', fontWeight: 'bold', fill: '#000000', fontSize: 18 }} />
+                    </YAxis>
+                    <Tooltip />
+                    <Legend verticalAlign="top" height={36} />
+                    <Line type="monotone" dataKey="trend" stroke="#615bcf" dot={false} />
+                    <Line type="monotone" dataKey="weekly" stroke="#43cc78" dot={false} />
+                    <Line type="monotone" dataKey="yearly" stroke="#cf5b61" dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+                    </div>
+                );
+            }
 
 export default App;

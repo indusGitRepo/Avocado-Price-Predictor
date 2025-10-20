@@ -1,5 +1,5 @@
 # Question number 1: How in-demand are avocados in the US and how much supply is there based on price changes...
-    # Will want to show overall average price increase over the years for all cities combined and how much volume there is
+    # Will want to show overall average price increase over the months for all cities 
 
     # or Predict Avocado prices for US cities for the next 8 months, and let the user pick which city they would like to forecast from
 
@@ -37,14 +37,14 @@ def forecastPriceByCityAndType(city, avocadoType):
 
     # propet model initalization where I want to capture yearly and weekly patterns from the data set
     # selecting a more conservative model for better predictions with changepoint scale being 0.01 < 0.05 and number of changepoints 25
-    model = Prophet(yearly_seasonality=True, daily_seasonality=False, weekly_seasonality=True, changepoint_prior_scale=0.01, n_changepoints=25)
+    model = Prophet(yearly_seasonality=True, daily_seasonality=False, weekly_seasonality=True, changepoint_prior_scale=0.02, n_changepoints=25)
 
     model.fit(citiesData)
 
-    # predict future prices 8 months away that are all one week apart starting from the date the user selected both city and type
-    startDate = pd.Timestamp.today().normalize() # today's date
-    futureDate = pd.date_range(start=startDate, periods=36, freq='W')
-    futureDataFrame = pd.DataFrame({'ds': futureDate})
+    # predict future prices 8 months from where the dataset ends based on the city and type the user selected
+    lastDate = citiesData['ds'].max() # last date in the data set
+    futureDates = pd.date_range(start=lastDate, periods=36+1, freq='W')[1:] # 8 months from that last date
+    futureDataFrame = pd.DataFrame({'ds': futureDates})
     forecast = model.predict(futureDataFrame)
 
     # extract the predicted prices from the forecast and apply it to the predicted mean (predicted prices)
@@ -55,7 +55,11 @@ def forecastPriceByCityAndType(city, avocadoType):
     forecastDataFrame = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
     forecastDataFrame = forecastDataFrame.rename(columns={'ds': 'Date', 'yhat': 'Forecast', 'yhat_lower': 'Lower', 'yhat_upper': 'Upper'})
 
-    return forecastDataFrame
+    # Extract trend and seasonal components
+    seasonalityData = forecast[['ds', 'trend', 'weekly', 'yearly']].copy()
+    seasonalityData = seasonalityData.rename(columns={'ds': 'Date'})
+
+    return forecastDataFrame, seasonalityData
 
 # helper functions for FastAPI
 def getAvailableCities():
