@@ -43,6 +43,7 @@ def forecast(city: str, avocadoType: str):
     }
 
 # when someone uses the root url "/" serve index.html
+app.get("/")
 app.get("/{full_path:path}")
 def reactApp(full_path: str = ""):
     pathIndex = os.path.join(appDirectory, "index.html")
